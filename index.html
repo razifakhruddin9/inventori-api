@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreshLog - Sistem Inventaris & FEFO</title>
+  <link rel="stylesheet" href="FreshLog.css">
+</head>
+<body>
+
+  <!-- BANNER PERINGATAN KEDALUWARSA (TOP ALERT BAR) -->
+  <div class="top-alert-bar" id="top-alert">
+    <div class="alert-content">
+      <span class="alert-icon">⚠️</span>
+      <span class="alert-text">
+        <strong>Peringatan Kedaluwarsa: </strong> Terdapat <strong> 2 Batch Status Hitam</strong> (&lt; 1 Bulan) dan <strong>3 Produk Stok Menipis</strong>!
+      </span>
+      <button class="btn-close-alert" onclick="this.parentElement.parentElement.style.display='none'">✕</button>
+    </div>
+  </div>
+
+  <!-- TOMBOL HAMBURGER UNTUK TAMPILAN HP -->
+  <button class="menu-toggle" id="menu-toggle">☰ Menu</button>
+
+  <!-- SIDEBAR NAVIGASI -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <h2>FreshLog</h2>
+    </div>
+
+    <!-- Info Peran & Sesi Jam Kerja -->
+    <div class="user-profile">
+      <p>Pengguna: <strong id="user-name">Admin Toko</strong></p>
+      <p>Peran: <span class="badge" id="user-role">Admin</span></p>
+      <p class="shift-info"><small>Sesi Shift: 07.00 - 14.30 WIB</small></p>
+    </div>
+
+    <nav class="nav-menu">
+      <ul>
+        <li><a href="#dashboard" class="active">Dashboard & Dampak</a></li>
+        <li><a href="#produk">Produk & Batch FEFO</a></li>
+        <li><a href="#kasir">Kasir (Scan Penjualan)</a></li>
+        <li><a href="#pemasok">Pemasok</a></li>
+        <li><a href="#smart-input">Input Suara & Foto</a></li>
+        <li><a href="#prediksi">Prediksi Restock</a></li>
+        <li><a href="#laporan">Laporan Rekapitulasi</a></li>
+        <li><a href="#notif-bot">Notifikasi Bot</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- KONTEN UTAMA -->
+  <main class="main-content">
+
+    <!-- SECTION 1: DASHBOARD UTAMA & DAMPAK -->
+    <section id="dashboard" class="section">
+      <header class="section-header">
+        <h1>Dashboard Ringkasan</h1>
+      </header>
+
+      <div class="card-grid">
+        <div class="card">
+          <h3>Total Stok Unit</h3>
+          <p class="metric-number">1,250 Pcs</p>
+        </div>
+        <div class="card card-warning">
+          <h3>Stok Menipis</h3>
+          <p class="metric-number">3 Produk</p>
+        </div>
+        <div class="card card-critical">
+          <h3>Batch Status Hitam (&lt; 1 Bln)</h3>
+          <p class="metric-number">2 Batch</p>
+        </div>
+      </div>
+
+      <!-- Ringkasan Produk Mendekati Kedaluwarsa -->
+      <div class="card warning-card">
+        <h2>Daftar Produk Mendekati Kedaluwarsa</h2>
+        <ul class="expire-list">
+          <li><strong>Susu UHT 1L</strong> (Batch: BTC-001) — Sisa 12 Hari <span class="status-badge status-black">Hitam</span></li>
+          <li><strong>Roti Tawar Daging</strong> (Batch: BTC-004) — Sisa 18 Hari <span class="status-badge status-black">Hitam</span></li>
+        </ul>
+      </div>
+
+      <!-- Dashboard Dampak Penyelamatkan Pangan -->
+      <div class="card impact-card">
+        <h2>Dashboard Dampak Penyelamatan Pangan</h2>
+        <div class="impact-metrics">
+          <div>
+            <p>Pangan Terselamatkan</p>
+            <h3>145 kg</h3>
+          </div>
+          <div>
+            <p>Nilai Rupiah Terselamatkan</p>
+            <h3>Rp 8.750.000</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grafik Pembelian vs Penjualan -->
+      <div class="card">
+        <h2>Grafik Pembelian vs Penjualan</h2>
+        <div class="chart-container">
+          <canvas id="chartPembelianPenjualan"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: KELOLA PRODUK & BATCH FEFO -->
+    <section id="produk" class="section">
+      <header class="section-header">
+        <h1>Kelola Produk & Batch FEFO</h1>
+        <div class="button-group">
+          <button class="btn btn-primary" onclick="openModal('modal-produk')">+ Produk Master</button>
+          <button class="btn btn-secondary" onclick="openModal('modal-batch')">+ Tambah Batch</button>
+        </div>
+      </header>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <input type="text" placeholder="Cari nama produk atau SKU...">
+        <select>
+          <option value="">Semua Kategori</option>
+          <option value="makanan">Makanan Segar</option>
+          <option value="minuman">Minuman</option>
+          <option value="minuman">mainan</option>
+          <option value="minuman">pekaian</option>
+          <option value="minuman">perkakas</option>
+        </select>
+        <select>
+          <option value="">Semua Status Risiko</option>
+          <option value="hitam">Hitam (&lt; 1 Bulan)</option>
+          <option value="merah">Merah (1 - 3 Bulan)</option>
+          <option value="kuning">Kuning (3 - 12 Bulan)</option>
+          <option value="hijau">Hijau (&gt; 1 Tahun)</option>
+        </select>
+      </div>
+
+      <!-- Tabel Inventaris -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Kode Batch</th>
+              <th>Nama Produk</th>
+              <th>Stok (Utuh)</th>
+              <th>Tgl Kedaluwarsa</th>
+              <th>Status Risiko</th>
+              <th>Saran Tindakan</th>
+              <th>Aksi (Admin)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>BTC-202611-01</td>
+              <td>Susu UHT 1L</td>
+              <td>24 Pcs</td>
+              <td>2026-11-15</td>
+              <td><span class="status-badge status-black">Hitam (&lt; 1 Bln)</span></td>
+              <td>
+                <select class="action-select">
+                  <option selected>Saran: Diskon 50%</option>
+                  <option>Buat Paket Bundling</option>
+                  <option>Pindah Cabang</option>
+                  <option>Salurkan Donasi</option>
+                </select>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-edit">Ubah</button>
+                <button class="btn btn-sm btn-delete">Hapus</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 3: SYSTEM KASIR PENJUALAN -->
+    <section id="kasir" class="section">
+      <header class="section-header">
+        <h1>Sistem Kasir Penjualan</h1>
+      </header>
+
+      <div class="kasir-grid">
+        <!-- Area Pemindaian Barcode -->
+        <div class="card">
+          <h2>Pemindaian Barcode</h2>
+          <label for="barcode-scanner">Scan / Ketik Barcode Produk</label>
+          <input type="text" id="barcode-scanner" placeholder="Arahkan scanner di sini..." autofocus>
+          <p class="fefo-info-text">
+            ⚡ <strong>Sistem FEFO Otomatis:</strong> Setiap item yang discan dipotong dari batch dengan kedaluwarsa terdekat.
+          </p>
+        </div>
+
+        <!-- Keranjang Transaksi Penjualan -->
+        <div class="card">
+          <h2>Keranjang Belanja</h2>
+          <table class="cart-table">
+            <thead>
+              <tr>
+                <th>Produk</th>
+                <th>Qty</th>
+                <th>Harga</th>
+                <th>Subtotal</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="cart-items">
+              <tr>
+                <td>Susu UHT 1L</td>
+                <td>2</td>
+                <td>Rp 18.000</td>
+                <td>Rp 36.000</td>
+                <td><button class="btn btn-sm btn-delete">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Rincian Pembayaran Kasir -->
+          <div class="cart-summary">
+            <h3>Total Belanja: <span>Rp 36.000</span></h3>
+            <div class="payment-inputs">
+              <label>Uang Dibayar (Rp):</label>
+              <input type="number" placeholder="Contoh: 50000">
+              <p>Kembalian: <strong>Rp 14.000</strong></p>
+            </div>
+            <button class="btn btn-success btn-block">Selesaikan & Cetak Struk</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: KELOLA PEMASOK -->
+    <section id="pemasok" class="section">
+      <header class="section-header">
+        <h1>Kelola Pemasok</h1>
+        <button class="btn btn-primary" onclick="openModal('modal-pemasok')">+ Tambah Pemasok</button>
+      </header>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID Pemasok</th>
+              <th>Nama Pemasok</th>
+              <th>Telepon</th>
+              <th>Alamat</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SUP-001</td>
+              <td>PT Distribusi Makanan Utama</td>
+              <td>081234567890</td>
+              <td>Jakarta Selatan</td>
+              <td>
+                <button class="btn btn-sm btn-edit">Ubah</button>
+                <button class="btn btn-sm btn-delete">Hapus</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 5: INPUT SUARA & FOTO NOTA -->
+    <section id="smart-input" class="section">
+      <header class="section-header">
+        <h1>Input Otomatis (Suara & Foto Nota)</h1>
+      </header>
+
+      <div class="card-grid">
+        <div class="card">
+          <h2>Input lewat Suara</h2>
+          <p>Ucapkan transaksi (contoh: "Masuk 20 botol susu exp bulan depan").</p>
+          <button type="button" class="btn btn-secondary">🎤 Mulai Rekam Suara</button>
+          <div class="result-box"><p><em>Transkrip suara...</em></p></div>
+        </div>
+
+        <div class="card">
+          <h2>Input Foto Nota</h2>
+          <p>Unggah foto nota komputer/kasir untuk diekstrak otomatis.</p>
+          <input type="file" accept="image/*">
+          <div class="result-box"><p><em>Pratinjau foto nota...</em></p></div>
+        </div>
+      </div>
+
+      <!-- Konfirmasi Pengguna Sebelum Simpan -->
+      <div class="card">
+        <h2>Konfirmasi Data Ekstraksi</h2>
+        <form>
+          <label>Produk Terdeteksi</label>
+          <input type="text" value="Susu UHT 1L">
+          <label>Jumlah</label>
+          <input type="number" value="20">
+          <label>Tanggal Kedaluwarsa</label>
+          <input type="date" value="2026-11-15">
+          <button type="button" class="btn btn-primary">Konfirmasi & Simpan Stok</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- SECTION 6: PREDIKSI RESTOCK -->
+    <section id="prediksi" class="section">
+      <header class="section-header">
+        <h1>Prediksi Kebutuhan Restock</h1>
+      </header>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama Produk</th>
+              <th>Rata-rata/Hari</th>
+              <th>Sisa Stok</th>
+              <th>Estimasi Habis</th>
+              <th>Saran Belanja</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Susu UHT 1L</td>
+              <td>15 Botol</td>
+              <td>10 Botol</td>
+              <td><span class="text-danger">0.6 Hari lagi</span></td>
+              <td><strong>+100 Botol</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 7: LAPORAN -->
+    <section id="laporan" class="section">
+      <header class="section-header">
+        <h1>Laporan Rekapitulasi</h1>
+      </header>
+      <div class="card">
+        <div class="filter-bar">
+          <select>
+            <option value="penjualan">Laporan Penjualan</option>
+            <option value="pembelian">Laporan Pembelian</option>
+            <option value="expired">Laporan Stok Kedaluwarsa</option>
+          </select>
+          <input type="date">
+          <button class="btn btn-primary">Unduh PDF</button>
+          <button class="btn btn-success">Unduh Excel</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 8: NOTIFIKASI BOT -->
+    <section id="notif-bot" class="section">
+      <header class="section-header">
+        <h1>Pengaturan Notifikasi Bot (Telegram / WhatsApp)</h1>
+      </header>
+      <form class="card">
+        <label>ID Telegram / Nomor WhatsApp Pemilik</label>
+        <input type="text" placeholder="Masukkan Chat ID / No HP" required>
+        <div class="checkbox-group">
+          <label><input type="checkbox" checked> Peringatan Batch Kedaluwarsa (Hitam/Merah)</label>
+          <label><input type="checkbox" checked> Peringatan Stok Menipis</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Simpan Pengaturan Bot</button>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- POP-UP MODAL 1: FORM PRODUK MASTER -->
+  <div class="modal" id="modal-produk">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Tambah Produk Master Baru</h2>
+        <button class="close-modal" onclick="closeModal('modal-produk')">✕</button>
+      </div>
+      <form>
+        <label>Nama Produk</label>
+        <input type="text" required placeholder="Contoh: Susu UHT 1L">
+        <label>Kode Barcode / SKU</label>
+        <input type="text" required placeholder="Contoh: 899123456789">
+        <label>Kategori</label>
+        <select required>
+          <option value="makanan">Makanan Segar</option>
+          <option value="minuman">Minuman</option>
+        </select>
+        <label>Harga Beli (Rp)</label>
+        <input type="number" required placeholder="15000">
+        <label>Harga Jual (Rp)</label>
+        <input type="number" required placeholder="18000">
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-produk')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Produk</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- POP-UP MODAL 2: FORM BATCH BARU -->
+  <div class="modal" id="modal-batch">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Tambah Batch Baru (Stok Masuk)</h2>
+        <button class="close-modal" onclick="closeModal('modal-batch')">✕</button>
+      </div>
+      <form>
+        <label>Pilih Produk Master</label>
+        <select required>
+          <option value="101">Susu UHT 1L</option>
+        </select>
+        <label>Kode Batch Manual</label>
+        <input type="text" required placeholder="Contoh: BTC-202611-01">
+        <label>Jumlah Masuk (Pcs)</label>
+        <input type="number" min="1" required placeholder="24">
+        <label>Tanggal Kedaluwarsa</label>
+        <input type="date" required>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-batch')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Batch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="FreshLog.js"></script>
+</body>
+</html>
