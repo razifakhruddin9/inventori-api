@@ -6,6 +6,7 @@ from datetime import date
 from skor_risiko import hitung_skor_risiko
 from rekomendasi import tentukan_saran
 from restock import hitung_restock
+from riwayat import hitung_riwayat
 
 # ── Inisialisasi aplikasi FastAPI ──────────────────────────────────────────
 app = FastAPI(
@@ -143,3 +144,28 @@ def prediksi_restock(data: RestockInput):
         "saran_belanja"      : hasil["saran_belanja"],
         "catatan"            : hasil["catatan"]
     }
+
+    # ── Definisi bentuk data masuk untuk riwayat ──────────────────────────────
+class RiwayatInput(BaseModel):
+    tahun: int = 2026
+
+    @field_validator("tahun")
+    @classmethod
+    def tahun_valid(cls, v):
+        if v < 2000 or v > 2100:
+            raise ValueError("Tahun tidak valid.")
+        return v
+
+
+# ── Endpoint riwayat ───────────────────────────────────────────────────────
+@app.get("/riwayat")
+def get_riwayat(tahun: int = 2026):
+    """
+    Mengembalikan data pembelian dan penjualan per bulan untuk grafik.
+    """
+
+    if tahun < 2000 or tahun > 2100:
+        return {"error": "Tahun tidak valid."}
+
+    hasil = hitung_riwayat(tahun)
+    return hasil
