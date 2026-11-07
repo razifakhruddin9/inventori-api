@@ -1,5 +1,5 @@
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
 from typing import List
 from datetime import date
@@ -11,15 +11,17 @@ from riwayat import hitung_riwayat
 
 # ── Inisialisasi aplikasi FastAPI ──────────────────────────────────────────
 app = FastAPI(
-    app.add_middleware(
+    title="API Inventori Pintar UMKM",
+    description="Menghitung skor risiko kedaluwarsa dan saran tindakan per batch.",
+    version="1.0.0"
+)
+
+# ── CORS middleware ────────────────────────────────────────────────────────
+app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
-)
-    title="API Inventori Pintar UMKM",
-    description="Menghitung skor risiko kedaluwarsa dan saran tindakan per batch.",
-    version="1.0.0"
 )
 
 # ── Definisi bentuk data yang masuk (request) ──────────────────────────────
@@ -27,10 +29,9 @@ class BatchInput(BaseModel):
     batch_id             : str
     produk               : str
     sisa_stok            : float
-    tanggal_kedaluwarsa  : str           # format "YYYY-MM-DD"
-    penjualan_14_hari    : List[float]   # daftar 14 angka penjualan harian
+    tanggal_kedaluwarsa  : str
+    penjualan_14_hari    : List[float]
 
-    # Validasi 1: sisa_stok tidak boleh negatif
     @field_validator("sisa_stok")
     @classmethod
     def stok_tidak_negatif(cls, v):
@@ -38,17 +39,15 @@ class BatchInput(BaseModel):
             raise ValueError("sisa_stok tidak boleh negatif.")
         return v
 
-    # Validasi 2: tanggal harus format yang benar
     @field_validator("tanggal_kedaluwarsa")
     @classmethod
     def format_tanggal_valid(cls, v):
         try:
             date.fromisoformat(v)
         except ValueError:
-            raise ValueError("tanggal_kedaluwarsa harus format YYYY-MM-DD, contoh: 2026-11-20")
+            raise ValueError("tanggal_kedaluwarsa harus format YYYY-MM-DD")
         return v
 
-    # Validasi 3: penjualan_14_hari tidak boleh kosong
     @field_validator("penjualan_14_hari")
     @classmethod
     def penjualan_tidak_kosong(cls, v):
@@ -59,52 +58,39 @@ class BatchInput(BaseModel):
         return v
 
 
-# ── Endpoint utama ─────────────────────────────────────────────────────────
+# ── Endpoint risiko ────────────────────────────────────────────────────────
 @app.post("/risiko")
 def hitung_risiko(data: BatchInput):
-    """
-    Menerima data satu batch produk, mengembalikan skor risiko dan saran tindakan.
-    """
-
-    # Panggil fungsi dari skor_risiko.py
     hasil_skor = hitung_skor_risiko(
         sisa_stok           = data.sisa_stok,
         tanggal_kedaluwarsa = data.tanggal_kedaluwarsa,
         penjualan_14_hari   = data.penjualan_14_hari
     )
-
-    # Panggil fungsi dari rekomendasi.py
     hasil_saran = tentukan_saran(
         status      = hasil_skor["status"],
         sisa_hari   = hasil_skor["sisa_hari"],
         sisa_stok   = data.sisa_stok,
         nama_produk = data.produk
     )
-
-    # Susun response sesuai kontrak API
     return {
-        "batch_id"                       : data.batch_id,
-        "produk"                         : data.produk,
-        "skor_risiko"                    : hasil_skor["skor_risiko"],
-        "status"                         : hasil_skor["status"],
-        "perkiraan_terjual_sampai_exp"   : hasil_skor["perkiraan_terjual"],
-        "sisa_hari"                      : hasil_skor["sisa_hari"],
-        "saran_tindakan"                 : hasil_saran["saran"],
-        "prioritas"                      : hasil_saran["prioritas"],
-        "catatan"                        : hasil_skor.get("catatan", "")
+        "batch_id"                     : data.batch_id,
+        "produk"                       : data.produk,
+        "skor_risiko"                  : hasil_skor["skor_risiko"],
+        "status"                       : hasil_skor["status"],
+        "perkiraan_terjual_sampai_exp" : hasil_skor["perkiraan_terjual"],
+        "sisa_hari"                    : hasil_skor["sisa_hari"],
+        "saran_tindakan"               : hasil_saran["saran"],
+        "prioritas"                    : hasil_saran["prioritas"],
+        "catatan"                      : hasil_skor.get("catatan", "")
     }
 
 
-# ── Endpoint cek kesehatan API (opsional tapi berguna) ─────────────────────
-@app.get("/")
-def root():
-    return {"status": "API berjalan", "versi": "1.0.0"}
-    # ── Definisi bentuk data masuk untuk restock ──────────────────────────────
+# ── Endpoint restock ───────────────────────────────────────────────────────
 class RestockInput(BaseModel):
     produk            : str
     sisa_stok         : float
     penjualan_14_hari : List[float]
-    hari_target       : int = 14      # default 14 hari, Orang B boleh kirim nilai lain
+    hari_target       : int = 14
 
     @field_validator("sisa_stok")
     @classmethod
@@ -130,19 +116,13 @@ class RestockInput(BaseModel):
         return v
 
 
-# ── Endpoint restock ───────────────────────────────────────────────────────
 @app.post("/restock")
 def prediksi_restock(data: RestockInput):
-    """
-    Menerima data satu produk, mengembalikan prediksi kebutuhan restock.
-    """
-
     hasil = hitung_restock(
         sisa_stok         = data.sisa_stok,
         penjualan_14_hari = data.penjualan_14_hari,
         hari_target       = data.hari_target
     )
-
     return {
         "produk"             : data.produk,
         "rata_rata_harian"   : hasil["rata_rata_harian"],
@@ -152,27 +132,16 @@ def prediksi_restock(data: RestockInput):
         "catatan"            : hasil["catatan"]
     }
 
-    # ── Definisi bentuk data masuk untuk riwayat ──────────────────────────────
-class RiwayatInput(BaseModel):
-    tahun: int = 2026
-
-    @field_validator("tahun")
-    @classmethod
-    def tahun_valid(cls, v):
-        if v < 2000 or v > 2100:
-            raise ValueError("Tahun tidak valid.")
-        return v
-
 
 # ── Endpoint riwayat ───────────────────────────────────────────────────────
 @app.get("/riwayat")
 def get_riwayat(tahun: int = 2026):
-    """
-    Mengembalikan data pembelian dan penjualan per bulan untuk grafik.
-    """
-
     if tahun < 2000 or tahun > 2100:
         return {"error": "Tahun tidak valid."}
+    return hitung_riwayat(tahun)
 
-    hasil = hitung_riwayat(tahun)
-    return hasil
+
+# ── Endpoint cek kesehatan ─────────────────────────────────────────────────
+@app.get("/")
+def root():
+    return {"status": "API berjalan", "versi": "1.0.0"}
