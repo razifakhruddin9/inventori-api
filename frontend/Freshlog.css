@@ -41,7 +41,110 @@
     flex-direction: column;
     min-height: 100vh;
   }
-  
+  .login-wrapper {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 420px; /* Ukuran box login dibuat dominan dan gagah */
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.login-wrapper h1 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.login-wrapper p {
+    margin: 0 0 30px 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   3. FORM GROUP & INPUT FIELD
+   ========================================================================== */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.form-group input, 
+.form-group select {
+    width: 100%;
+    padding: 12px 16px; /* Padding tebal untuk kenyamanan sentuhan/ketikan */
+    font-size: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+/* Efek interaktif saat kolom input diklik */
+.form-group input:focus, 
+.form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+/* ==========================================================================
+   4. TOMBOL AKSES MASUK
+   ========================================================================== */
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #1e3a8a;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+}
+
+.btn-login:hover {
+    background-color: #1d4ed8;
+}
+
+/* ==========================================================================
+   5. NOTIFIKASI ERROR & LOCK SYSTEM
+   ========================================================================== */
+.error-box {
+    color: #dc2626;
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-top: 20px;
+    display: none; /* Sembunyi, baru muncul jika password/user salah */
+}
+
+/* MENGUNCI HALAMAN BELAKANG (Mengharuskan User Login Dulu) */
+#main-content {
+    display: none; 
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
   /* ========================================== */
   /* 2. BANNER PERINGATAN ATAS (TOP ALERT BAR)  */
   /* ========================================== */
@@ -188,28 +291,6 @@
     font-weight: bold;
     margin-top: 8px;
   }
-
-  .card {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    padding: 24px;
-}
-
-.card h2 {
-    color: #2d3748;
-    font-size: 1.5rem;
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-weight: 600;
-}
-
-/* Memastikan wadah grafik mengikuti ukuran kartu secara fleksibel */
-.chart-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
   
   /* Variasi Warna Kartu Peringatan */
   .card-warning { border-left: 5px solid var(--status-yellow); }

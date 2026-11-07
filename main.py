@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from pydantic import BaseModel, field_validator
 from typing import List
@@ -10,6 +11,12 @@ from riwayat import hitung_riwayat
 
 # ── Inisialisasi aplikasi FastAPI ──────────────────────────────────────────
 app = FastAPI(
+    app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
     title="API Inventori Pintar UMKM",
     description="Menghitung skor risiko kedaluwarsa dan saran tindakan per batch.",
     version="1.0.0"
